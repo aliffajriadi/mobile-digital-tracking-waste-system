@@ -70,23 +70,17 @@ class _DetailLaporanPageState extends State<DetailLaporanPage> {
     return Scaffold(
       backgroundColor: bgLightColor,
       appBar: AppBar(
-        toolbarHeight: 80,
         backgroundColor: primaryColor,
         elevation: 0,
+        centerTitle: true,
+        title: const Text(
+          'Detail Laporan',
+          style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+        ),
         leading: IconButton(
-          padding: const EdgeInsets.only(top: 15),
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Padding(
-          padding: EdgeInsets.only(top: 15),
-          child: Text(
-            'Detail Laporan',
-            style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-        ),
-        centerTitle: false,
-        titleSpacing: 0,
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator(color: primaryColor))
@@ -97,234 +91,295 @@ class _DetailLaporanPageState extends State<DetailLaporanPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // --- TOMBOL EDIT & HAPUS ---
-                      Row(
-                        children: [
-                          Expanded(
-                            child: SizedBox(
-                              height: 45,
-                              child: ElevatedButton.icon(
-                                onPressed: () {
-                                  // TODO: Aksi Edit Data
-                                },
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: yellowEdit,
-                                  elevation: 0,
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                                ),
-                                icon: const Icon(Icons.edit, color: Colors.white, size: 18),
-                                label: const Text("Edit", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: SizedBox(
-                              height: 45,
-                              child: ElevatedButton.icon(
-                                onPressed: () {
-                                  // TODO: Aksi Hapus Data
-                                },
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: orangeWarning,
-                                  elevation: 0,
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                                ),
-                                icon: const Icon(Icons.delete, color: Colors.white, size: 18),
-                                label: const Text("Hapus", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 20),
-
-                      // --- KARTU WAKTU & TANGGAL ---
+                      // --- HEADER HIGHLIGHT (JENIS SAMPAH & TOTAL INPUT) ---
                       Container(
-                        padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
                           color: Colors.white,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.black12),
+                          borderRadius: BorderRadius.circular(20),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.03),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
+                            )
+                          ],
                         ),
-                        child: Row(
+                        child: Column(
                           children: [
-                            const Icon(Icons.access_time_filled_rounded, color: darkBlueColor, size: 28),
-                            const SizedBox(width: 16),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  _detailData!['waktu_tanggal'],
-                                  style: const TextStyle(fontWeight: FontWeight.bold, color: darkBlueColor, fontSize: 14),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  _detailData!['waktu_jam'],
-                                  style: const TextStyle(color: Colors.grey, fontSize: 12),
-                                ),
-                              ],
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                              decoration: const BoxDecoration(
+                                color: primaryColor,
+                                borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      const Text("Total Input", style: TextStyle(fontSize: 13, color: Colors.white70, fontWeight: FontWeight.w500)),
+                                      const SizedBox(height: 4),
+                                      Row(
+                                        crossAxisAlignment: CrossAxisAlignment.baseline,
+                                        textBaseline: TextBaseline.alphabetic,
+                                        children: [
+                                          Text(
+                                            "${_detailData!['jumlah']} ",
+                                            style: const TextStyle(fontSize: 36, fontWeight: FontWeight.w800, color: Colors.white),
+                                          ),
+                                          Text(
+                                            _detailData!['satuan'],
+                                            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                  Container(
+                                    padding: const EdgeInsets.all(12),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white.withOpacity(0.2),
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: const Icon(Icons.scale_rounded, color: Colors.white, size: 28),
+                                  )
+                                ],
+                              ),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.all(20),
+                              child: Row(
+                                children: [
+                                  Container(
+                                    width: 48,
+                                    height: 48,
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFFFF3E0),
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: Icon(
+                                      _detailData!['sub_kategori'].toString().toLowerCase().contains('botol')
+                                          ? Icons.local_drink_rounded
+                                          : Icons.delete_outline_rounded,
+                                      color: Colors.orange,
+                                      size: 24,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 16),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        const Text("Jenis Sampah", style: TextStyle(fontSize: 12, color: Colors.grey, fontWeight: FontWeight.w500)),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          _detailData!['sub_kategori'],
+                                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: darkBlueColor),
+                                        ),
+                                      ],
+                                    ),
+                                  )
+                                ],
+                              ),
                             )
                           ],
                         ),
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 20),
 
-                      // --- GRID: JENIS SAMPAH & TOTAL INPUT ---
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Container(
-                              height: 120,
-                              padding: const EdgeInsets.all(16),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: Colors.black12),
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  const Text("Jenis Sampah", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.black54)),
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Expanded(
-                                        child: Text(
-                                          _detailData!['sub_kategori'],
-                                          overflow: TextOverflow.ellipsis,
-                                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.orange),
-                                        ),
-                                      ),
-                                      Icon(
-                                        _detailData!['sub_kategori'].toString().toLowerCase().contains('botol')
-                                            ? Icons.local_drink_rounded
-                                            : Icons.oil_barrel_rounded,
-                                        color: Colors.blue,
-                                        size: 35,
-                                      ),
-                                    ],
-                                  )
-                                ],
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: Container(
-                              height: 120,
-                              padding: const EdgeInsets.all(16),
-                              decoration: BoxDecoration(
-                                color: primaryColor,
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  const Text("Total Input", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white70)),
-                                  Row(
-                                    crossAxisAlignment: CrossAxisAlignment.baseline,
-                                    textBaseline: TextBaseline.alphabetic,
-                                    children: [
-                                      Text(
-                                        "${_detailData!['jumlah']} ",
-                                        style: const TextStyle(fontSize: 32, fontWeight: FontWeight.w200, color: Colors.white),
-                                      ),
-                                      Text(
-                                        _detailData!['satuan'],
-                                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
-                                      ),
-                                    ],
-                                  )
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
+                      // --- INFORMASI LAINNYA ---
+                      const Text(
+                        "Informasi Detail",
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: darkBlueColor),
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 12),
 
-                      // --- KARTU SUMBER SAMPAH ---
                       Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(16),
+                        padding: const EdgeInsets.all(20),
                         decoration: BoxDecoration(
                           color: Colors.white,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.black12),
-                        ),
-                        child: RichText(
-                          text: TextSpan(
-                            style: const TextStyle(fontSize: 14, color: darkBlueColor),
-                            children: [
-                              const TextSpan(text: "Sumber sampah : ", style: TextStyle(fontWeight: FontWeight.w500)),
-                              TextSpan(text: _detailData!['sumber'].toString().toUpperCase(), style: const TextStyle(fontWeight: FontWeight.bold)),
-                            ],
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-
-                      // --- KARTU CATATAN DARI PIC ---
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.black12),
+                          borderRadius: BorderRadius.circular(20),
+                          boxShadow: [
+                            BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))
+                          ],
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
-                              "Catatan Dari PIC",
-                              style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: darkBlueColor),
+                            // Waktu
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(10),
+                                  decoration: BoxDecoration(color: const Color(0xFFE3F2FD), borderRadius: BorderRadius.circular(10)),
+                                  child: const Icon(Icons.access_time_rounded, color: Colors.blue, size: 20),
+                                ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      const Text("Waktu Tercatat", style: TextStyle(fontSize: 12, color: Colors.grey)),
+                                      const SizedBox(height: 4),
+                                      Text(_detailData!['waktu_tanggal'], style: const TextStyle(fontWeight: FontWeight.bold, color: darkBlueColor, fontSize: 14)),
+                                      const SizedBox(height: 2),
+                                      Text(_detailData!['waktu_jam'], style: const TextStyle(color: Colors.grey, fontSize: 13)),
+                                    ],
+                                  ),
+                                )
+                              ],
                             ),
-                            const SizedBox(height: 10),
-                            Text(
-                              _detailData!['catata_atau_notes'] ?? _detailData!['catatan'],
-                              style: const TextStyle(fontSize: 13, color: Colors.black87, height: 1.4),
+                            const Padding(padding: EdgeInsets.symmetric(vertical: 16), child: Divider(height: 1, color: Color(0xFFF1F5F9))),
+                            // Sumber
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(10),
+                                  decoration: BoxDecoration(color: const Color(0xFFF3E8FF), borderRadius: BorderRadius.circular(10)),
+                                  child: const Icon(Icons.place_rounded, color: Colors.purple, size: 20),
+                                ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      const Text("Sumber Sampah", style: TextStyle(fontSize: 12, color: Colors.grey)),
+                                      const SizedBox(height: 4),
+                                      Text(_detailData!['sumber'].toString().toUpperCase(), style: const TextStyle(fontWeight: FontWeight.bold, color: darkBlueColor, fontSize: 14)),
+                                    ],
+                                  ),
+                                )
+                              ],
+                            ),
+                            const Padding(padding: EdgeInsets.symmetric(vertical: 16), child: Divider(height: 1, color: Color(0xFFF1F5F9))),
+                            // Catatan
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(10),
+                                  decoration: BoxDecoration(color: const Color(0xFFE2F9F3), borderRadius: BorderRadius.circular(10)),
+                                  child: const Icon(Icons.notes_rounded, color: primaryColor, size: 20),
+                                ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      const Text("Catatan PIC", style: TextStyle(fontSize: 12, color: Colors.grey)),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        _detailData!['catata_atau_notes'] ?? _detailData!['catatan'],
+                                        style: const TextStyle(color: darkBlueColor, fontSize: 14, height: 1.4),
+                                      ),
+                                    ],
+                                  ),
+                                )
+                              ],
                             ),
                           ],
                         ),
                       ),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 24),
 
                       // --- SECTION LAMPIRAN ---
                       const Text(
-                        "Lampiran",
+                        "Lampiran Foto",
                         style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: darkBlueColor),
                       ),
                       const SizedBox(height: 12),
                       
                       _detailData!['foto'] == null
-                          ? const Text("Tidak ada lampiran foto", style: TextStyle(color: Colors.grey, fontSize: 13))
-                          : Container(
-                              width: 150,
-                              height: 150,
+                          ? Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.symmetric(vertical: 30),
                               decoration: BoxDecoration(
-                                color: Colors.grey.shade200,
-                                borderRadius: BorderRadius.circular(10),
-                                border: Border.all(color: Colors.black12),
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(color: Colors.grey.shade200, style: BorderStyle.solid),
                               ),
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(10),
+                              child: Column(
+                                children: [
+                                  Icon(Icons.image_not_supported_rounded, color: Colors.grey.shade300, size: 48),
+                                  const SizedBox(height: 8),
+                                  const Text("Tidak ada lampiran foto", style: TextStyle(color: Colors.grey, fontSize: 13)),
+                                ],
+                              ),
+                            )
+                          : ClipRRect(
+                              borderRadius: BorderRadius.circular(16),
+                              child: Container(
+                                width: double.infinity,
+                                constraints: const BoxConstraints(maxHeight: 250),
                                 child: Image.network(
                                   _detailData!['foto'],
                                   fit: BoxFit.cover,
                                   errorBuilder: (context, error, stackTrace) {
-                                    return const Center(child: Icon(Icons.broken_image, size: 40, color: Colors.grey));
+                                    return Container(
+                                      color: Colors.grey.shade100,
+                                      child: const Center(child: Icon(Icons.broken_image, size: 40, color: Colors.grey)),
+                                    );
                                   },
                                 ),
                               ),
                             ),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 30),
                     ],
                   ),
                 ),
+      bottomNavigationBar: _isLoading || _detailData == null
+          ? null
+          : Container(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                boxShadow: [
+                  BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, -5))
+                ]
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: SizedBox(
+                      height: 50,
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          // TODO: Aksi Edit Data
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: yellowEdit,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                        ),
+                        icon: const Icon(Icons.edit_rounded, color: Colors.white, size: 20),
+                        label: const Text("Edit", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15)),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: SizedBox(
+                      height: 50,
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          // TODO: Aksi Hapus Data
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: orangeWarning,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                        ),
+                        icon: const Icon(Icons.delete_outline_rounded, color: Colors.white, size: 20),
+                        label: const Text("Hapus", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15)),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
     );
   }
 }

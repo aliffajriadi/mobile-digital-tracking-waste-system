@@ -1,14 +1,18 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:mobile/core/theme/app_theme.dart';
+import 'package:mobile/core/constants/api_constants.dart';
 
 class SettingsProfileSection extends StatelessWidget {
   final String userName;
   final String userNik;
+  final String? userPhoto;
 
   const SettingsProfileSection({
     super.key,
     required this.userName,
     required this.userNik,
+    this.userPhoto,
   });
 
   @override
@@ -24,14 +28,19 @@ class SettingsProfileSection extends StatelessWidget {
               width: 2.5,
             ),
           ),
-          child: const CircleAvatar(
+          child: CircleAvatar(
             radius: 50,
-            backgroundColor: Color(0xFFE2E8F0),
-            child: Icon(
+            backgroundColor: const Color(0xFFE2E8F0),
+            backgroundImage: userPhoto != null 
+                ? (userPhoto!.startsWith('/') || userPhoto!.startsWith('file://')
+                    ? FileImage(File(userPhoto!)) as ImageProvider
+                    : NetworkImage("${ApiConstants.storageUrl}/$userPhoto"))
+                : null,
+            child: userPhoto == null ? const Icon(
               Icons.person,
               size: 55,
               color: Colors.grey,
-            ),
+            ) : null,
           ),
         ),
         const SizedBox(height: 14),

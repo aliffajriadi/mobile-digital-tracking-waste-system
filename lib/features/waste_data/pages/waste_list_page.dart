@@ -50,13 +50,13 @@ class _LaporanDataHarianPageState extends State<LaporanDataHarianPage> {
       String token = prefs.getString('token') ?? '';
 
       final response = await http.get(
-        Uri.parse(ApiConstants.laporanHarian),
+        Uri.parse(ApiConstants.wasteStocks),
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
           'Authorization': 'Bearer $token',
         },
-      ).timeout(const Duration(seconds: 5));
+      ).timeout(const Duration(seconds: 10));
       
       if (!mounted) return;
 
@@ -253,6 +253,12 @@ class _LaporanDataHarianPageState extends State<LaporanDataHarianPage> {
           ...b3List.map((item) => _buildItemInkWell(item, primaryColor)),
           const SizedBox(height: 10),
         ],
+        // Hasil Olahan will be uncategorized if it's not matched above, let's catch it
+        if (data.where((e) => (e['jenis_kategori'] ?? '').toString().toLowerCase() == 'hasil olahan').toList().isNotEmpty) ...[
+          _buildCategoryHeader("Hasil Olahan", Colors.orange),
+          ...data.where((e) => (e['jenis_kategori'] ?? '').toString().toLowerCase() == 'hasil olahan').toList().map((item) => _buildItemInkWell(item, primaryColor)),
+          const SizedBox(height: 10),
+        ],
       ],
     );
   }
@@ -290,12 +296,12 @@ class _LaporanDataHarianPageState extends State<LaporanDataHarianPage> {
   Widget _buildItemInkWell(Map<String, dynamic> item, Color arrowColor) {
     return InkWell(
       onTap: () {
-        // Halaman detail sampah nanti tinggal dipasang di file detail_waste_page.dart
-        Navigator.push(
-          context, 
-          MaterialPageRoute(
-            builder: (context) => DetailLaporanPage(idLaporan: item['id'] ?? 0), 
-          ),
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Stok ${item['kategori'] ?? ''}: ${item['jumlah'] ?? '0'}"),
+            duration: const Duration(seconds: 2),
+            behavior: SnackBarBehavior.floating,
+          )
         );
       },
       child: _buildLaporanCard(item, arrowColor),
@@ -358,7 +364,7 @@ class _LaporanDataHarianPageState extends State<LaporanDataHarianPage> {
             ],
           ),
           const SizedBox(width: 10),
-          Icon(Icons.arrow_forward_ios_rounded, color: arrowColor, size: 14),
+          Icon(Icons.info_outline, color: arrowColor, size: 18),
         ],
       ),
     );

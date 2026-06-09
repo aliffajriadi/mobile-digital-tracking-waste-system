@@ -21,24 +21,26 @@ class ProfileService {
     required String name,
     required String email,
     required String phone,
+    String? imagePath,
   }) async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token') ?? '';
     final url = ApiConstants.updateProfile;
 
-    final response = await http.post(
-      Uri.parse(url),
-      headers: {
-        'Authorization': 'Bearer $token',
-        'Accept': 'application/json',
-      },
-      body: {
-        'name': name.trim(),
-        'email': email.trim(),
-        'phone': phone.trim(),
-      },
-    ).timeout(const Duration(seconds: 10));
+    var request = http.MultipartRequest('POST', Uri.parse(url));
+    request.headers['Authorization'] = 'Bearer $token';
+    request.headers['Accept'] = 'application/json';
 
+    request.fields['name'] = name.trim();
+    request.fields['email'] = email.trim();
+    request.fields['phone'] = phone.trim();
+
+    if (imagePath != null && imagePath.isNotEmpty) {
+      request.files.add(await http.MultipartFile.fromPath('photo', imagePath));
+    }
+
+    final streamedResponse = await request.send().timeout(const Duration(seconds: 15));
+    final response = await http.Response.fromStream(streamedResponse);
     final responseData = json.decode(response.body);
 
     if (response.statusCode == 200 && responseData['success'] == true) {
@@ -50,6 +52,10 @@ class ProfileService {
         await prefs.setString('email', email.trim());
       }
       await prefs.setString('user_phone', phone.trim());
+      
+      if (responseData['user'] != null && responseData['user']['photo'] != null) {
+        await prefs.setString('user_profile_text', responseData['user']['photo']);
+      }
       return true;
     } else {
       throw responseData['message'] ?? 'Gagal memperbarui profil';

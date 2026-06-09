@@ -6,6 +6,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:mobile/core/constants/api_constants.dart'; 
+import 'package:mobile/core/widgets/ruler_picker_modal.dart';
 
 class InputSampahPage extends StatefulWidget {
   // Menerima data map sub-kategori dinamis dari halaman sebelumnya
@@ -21,6 +22,8 @@ class _InputSampahPageState extends State<InputSampahPage> {
   final _kuantitasController = TextEditingController();
   final _catatanController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
+
+  double _sliderValue = 0.0;
 
   List<dynamic> _sumberLokasiList = [];
   Map<String, dynamic>? _selectedSumberLocation;
@@ -283,8 +286,9 @@ class _InputSampahPageState extends State<InputSampahPage> {
       appBar: AppBar(
         backgroundColor: primaryColor,
         elevation: 0,
+        centerTitle: true,
         iconTheme: const IconThemeData(color: Colors.white),
-        title: const Text('Input Sampah Masuk', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700)),
+        title: const Text('Input Sampah Masuk', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
       ),
       
       // 1. BODY: KHUSUS FORM YANG BISA DI-SCROLL
@@ -312,16 +316,16 @@ class _InputSampahPageState extends State<InputSampahPage> {
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: Colors.black12),
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 12, offset: const Offset(0, 4))],
                       ),
                       child: Row(
                         children: [
                           Container(
-                            width: 55,
-                            height: 55,
-                            decoration: BoxDecoration(color: const Color(0xFFE9F5F3), borderRadius: BorderRadius.circular(10)),
-                            child: const Icon(Icons.restore_from_trash_rounded, color: primaryColor, size: 30),
+                            width: 60,
+                            height: 60,
+                            decoration: BoxDecoration(color: const Color(0xFFE2F9F3), borderRadius: BorderRadius.circular(14)),
+                            child: const Icon(Icons.restore_from_trash_rounded, color: primaryColor, size: 32),
                           ),
                           const SizedBox(width: 16),
                           Expanded(
@@ -356,7 +360,11 @@ class _InputSampahPageState extends State<InputSampahPage> {
                       borderRadius: BorderRadius.circular(12),
                       child: Container(
                         padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.black12)),
+                        decoration: BoxDecoration(
+                          color: Colors.white, 
+                          borderRadius: BorderRadius.circular(14), 
+                          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 4))]
+                        ),
                         child: Row(
                           children: [
                             const Icon(Icons.calendar_month_rounded, color: primaryColor, size: 20),
@@ -376,7 +384,11 @@ class _InputSampahPageState extends State<InputSampahPage> {
                       borderRadius: BorderRadius.circular(12),
                       child: Container(
                         padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.black12)),
+                        decoration: BoxDecoration(
+                          color: Colors.white, 
+                          borderRadius: BorderRadius.circular(14), 
+                          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 4))]
+                        ),
                         child: Row(
                           children: [
                             const Icon(Icons.location_on_rounded, color: primaryColor, size: 20),
@@ -400,7 +412,11 @@ class _InputSampahPageState extends State<InputSampahPage> {
                       children: [
                         Expanded(
                           child: Container(
-                            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.grey.shade300)),
+                            decoration: BoxDecoration(
+                              color: Colors.white, 
+                              borderRadius: BorderRadius.circular(14), 
+                              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 4))]
+                            ),
                             child: TextField(
                               controller: _kuantitasController,
                               keyboardType: const TextInputType.numberWithOptions(decimal: true),
@@ -417,17 +433,36 @@ class _InputSampahPageState extends State<InputSampahPage> {
                         const SizedBox(width: 10),
                         Material(
                           color: const Color(0xFF14A38B),
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(14),
+                          elevation: 2,
+                          shadowColor: const Color(0xFF14A38B).withOpacity(0.4),
                           child: InkWell(
-                            onTap: () => _showSnackbar("Menghubungkan ke timbangan..."),
+                            onTap: () async {
+                              double currentVal = double.tryParse(_kuantitasController.text.replaceAll(',', '.')) ?? 0.0;
+                              final result = await showRulerPickerModal(
+                                context,
+                                initialValue: currentVal,
+                                max: 500.0,
+                                unit: unitSymbol,
+                              );
+                              if (result != null) {
+                                setState(() {
+                                  _kuantitasController.text = result.toStringAsFixed(1);
+                                });
+                              }
+                            },
                             borderRadius: BorderRadius.circular(12),
                             child: const Padding(
                               padding: EdgeInsets.all(15),
-                              child: Icon(Icons.scale_rounded, color: Colors.white),
+                              child: Icon(Icons.straighten_rounded, color: Colors.white),
                             ),
                           ),
                         ),
                       ],
+                    ),
+                    const Padding(
+                      padding: EdgeInsets.only(left: 4, top: 4),
+                      child: Text("Ketik manual atau klik ikon penggaris di kanan", style: TextStyle(fontSize: 11, color: Colors.grey, fontStyle: FontStyle.italic)),
                     ),
                     const SizedBox(height: 16),
 
@@ -439,7 +474,11 @@ class _InputSampahPageState extends State<InputSampahPage> {
                       child: Container(
                         width: double.infinity,
                         height: 160,
-                        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.black12)),
+                        decoration: BoxDecoration(
+                          color: Colors.white, 
+                          borderRadius: BorderRadius.circular(16), 
+                          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 4))]
+                        ),
                         child: _buktiFoto != null
                             ? ClipRRect(
                                 borderRadius: BorderRadius.circular(12),
@@ -460,7 +499,11 @@ class _InputSampahPageState extends State<InputSampahPage> {
                     // 6. CATATAN PIC
                     _buildLabel("Catatan Lapangan PIC (Opsional)"),
                     Container(
-                      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.black12)),
+                      decoration: BoxDecoration(
+                        color: Colors.white, 
+                        borderRadius: BorderRadius.circular(14), 
+                        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 4))]
+                      ),
                       child: TextField(
                         controller: _catatanController,
                         maxLines: 3,

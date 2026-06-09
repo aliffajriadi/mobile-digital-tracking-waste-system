@@ -35,7 +35,7 @@ class DashboardHeader extends StatelessWidget {
               borderRadius: BorderRadius.circular(24),
               child: fotoProfil != null && fotoProfil!.isNotEmpty
                   ? Image.network(
-                      "${ApiConstants.baseUrl}/storage/$fotoProfil",
+                      "${ApiConstants.storageUrl}/$fotoProfil",
                       fit: BoxFit.cover,
                       errorBuilder: (_, __, ___) {
                         return const Icon(

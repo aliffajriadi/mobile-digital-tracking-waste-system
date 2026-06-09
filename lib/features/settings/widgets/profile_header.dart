@@ -1,4 +1,6 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import '../../../core/constants/api_constants.dart';
 
 class ProfileHeader extends StatelessWidget {
   final String name;
@@ -42,7 +44,11 @@ class ProfileHeader extends StatelessWidget {
                   child: CircleAvatar(
                     radius: 50,
                     backgroundColor: const Color(0xFFE2E8F0),
-                    backgroundImage: imageUrl != null ? NetworkImage(imageUrl!) : null,
+                    backgroundImage: imageUrl != null
+                        ? (imageUrl!.startsWith('/') || imageUrl!.startsWith('file://')
+                            ? FileImage(File(imageUrl!)) as ImageProvider
+                            : NetworkImage("${ApiConstants.storageUrl}/$imageUrl"))
+                        : null,
                     child: imageUrl == null
                         ? const Icon(Icons.person, size: 55, color: Colors.grey)
                         : null,

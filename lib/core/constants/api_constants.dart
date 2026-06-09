@@ -26,6 +26,7 @@ class ApiConstants {
   // Fitur Laporan & Riwayat
   static const String riwayatLaporan = '$baseUrl/riwayat-laporan'; 
   static const String laporanHarian = '$baseUrl/laporan-harian'; 
+  static const String wasteStocks = '$baseUrl/waste-stocks';
   static const String laporanKendala = '$baseUrl/laporan-kendala'; 
 
   static const String processedWaste = '$baseUrl/processed-waste';
@@ -33,6 +34,8 @@ class ApiConstants {
 
   static const String wasteOutMethods = '$baseUrl/waste-out-methods';
   static const String wasteOut = '$baseUrl/waste-out';
+  static const String wasteBuyers = '$baseUrl/waste-buyers';
+  static const String wasteDestinations = '$baseUrl/waste-destinations';
 
   static const String wasteB3Notifications = '$baseUrl/waste-b3-notifications';
 }

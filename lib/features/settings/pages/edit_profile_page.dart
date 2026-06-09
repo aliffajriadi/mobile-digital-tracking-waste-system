@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:mobile/features/settings/services/profile_service.dart';
 import 'package:mobile/features/settings/widgets/profile_header.dart';
 import 'package:mobile/features/settings/widgets/profile_input_field.dart';
@@ -60,6 +61,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
         name: _nameController.text,
         email: _emailController.text,
         phone: _phoneController.text,
+        imagePath: _selectedImagePath,
       );
 
       if (mounted) Navigator.pop(context); // Tutup loading dialog
@@ -73,11 +75,22 @@ class _EditProfilePageState extends State<EditProfilePage> {
     }
   }
 
-  void _handlePhotoUploadSimulation() {
-    setState(() {
-      _profileImageUrl = "https://avatar.iran.liara.run/public/30";
-    });
-    _showSnackBar('Simulasi: Foto profil berhasil diperbarui!', const Color(0xFF14A38B));
+  String? _selectedImagePath;
+  final _picker = ImagePicker();
+
+  void _handlePhotoUploadSimulation() async {
+    try {
+      final pickedFile = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 70);
+      if (pickedFile != null) {
+        setState(() {
+          _selectedImagePath = pickedFile.path;
+          _profileImageUrl = pickedFile.path;
+        });
+        _showSnackBar('Foto dipilih. Tekan Simpan Perubahan untuk mengunggah.', const Color(0xFF14A38B));
+      }
+    } catch (e) {
+      _showSnackBar('Gagal memilih foto', Colors.redAccent);
+    }
   }
 
   void _showSnackBar(String message, Color backgroundColor) {

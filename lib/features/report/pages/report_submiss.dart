@@ -139,23 +139,18 @@ class _LaporanKendalaPageState extends State<LaporanKendalaPage> {
     return Scaffold(
       backgroundColor: bgLightColor,
       appBar: AppBar(
-        toolbarHeight: 80,
+        toolbarHeight: 70,
         backgroundColor: primaryColor,
         elevation: 0,
         leading: IconButton(
-          padding: const EdgeInsets.only(top: 15),
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Padding(
-          padding: EdgeInsets.only(top: 15),
-          child: Text(
-            'Isi Laporan Lainnya',
-            style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
-          ),
+        title: const Text(
+          'Laporan & Kendala',
+          style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
         ),
-        centerTitle: false,
-        titleSpacing: 0,
+        centerTitle: true,
       ),
       body: _isLoading 
       ? const Center(child: CircularProgressIndicator(color: primaryColor))
@@ -165,7 +160,7 @@ class _LaporanKendalaPageState extends State<LaporanKendalaPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                'Laporkan Hal lain atau kendala harian lapangan',
+                'Laporkan Hal Lain atau Kendala Lapangan',
                 style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: darkTealColor),
               ),
               const SizedBox(height: 20),
@@ -173,17 +168,23 @@ class _LaporanKendalaPageState extends State<LaporanKendalaPage> {
               // --- INPUT KATEGORI LAPORAN ---
               _buildLabel("Kategori Kendala"),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.black12),
+                  borderRadius: BorderRadius.circular(14),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.03),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
                 ),
                 child: DropdownButtonHideUnderline(
                   child: DropdownButton<String>(
                     value: _selectedCategoryId,
                     isExpanded: true,
-                    icon: const Icon(Icons.keyboard_arrow_down_rounded),
+                    icon: const Icon(Icons.keyboard_arrow_down_rounded, color: primaryColor),
                     items: _categories.map((cat) {
                       return DropdownMenuItem<String>(
                         value: cat['id'].toString(),
@@ -223,8 +224,14 @@ class _LaporanKendalaPageState extends State<LaporanKendalaPage> {
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Colors.black12),
+                  borderRadius: BorderRadius.circular(14),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.03),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
                 ),
                 child: Row(
                   children: [
@@ -232,14 +239,14 @@ class _LaporanKendalaPageState extends State<LaporanKendalaPage> {
                       width: 80,
                       height: 80,
                       decoration: BoxDecoration(
-                        color: const Color(0xFFE5E9EC),
+                        color: bgLightColor,
                         borderRadius: BorderRadius.circular(12),
                         image: _selectedFile != null 
                             ? DecorationImage(image: FileImage(_selectedFile!), fit: BoxFit.cover)
                             : null,
                       ),
                       child: _selectedFile == null 
-                          ? const Icon(Icons.image_outlined, color: Colors.grey, size: 40)
+                          ? const Icon(Icons.add_photo_alternate_outlined, color: Colors.grey, size: 36)
                           : null,
                     ),
                     const SizedBox(width: 16),
@@ -247,23 +254,25 @@ class _LaporanKendalaPageState extends State<LaporanKendalaPage> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          ElevatedButton(
+                          ElevatedButton.icon(
                             onPressed: _pickImage, 
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFFE5E9EC),
+                              backgroundColor: bgLightColor,
                               elevation: 0,
-                              foregroundColor: Colors.black87,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                              foregroundColor: primaryColor,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                             ),
-                            child: Text(
+                            icon: Icon(_selectedFile == null ? Icons.upload_file : Icons.edit, size: 16),
+                            label: Text(
                               _selectedFile == null ? "Pilih Gambar" : "Ubah Gambar",
-                              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
                             ),
                           ),
-                          const SizedBox(height: 4),
+                          const SizedBox(height: 8),
                           const Text(
-                            "Mendukung format gambar png, jpg, jpeg",
-                            style: TextStyle(fontSize: 10, color: Colors.grey),
+                            "Mendukung format gambar PNG, JPG, JPEG.",
+                            style: TextStyle(fontSize: 11, color: Colors.grey),
                           ),
                         ],
                       ),
@@ -271,45 +280,51 @@ class _LaporanKendalaPageState extends State<LaporanKendalaPage> {
                   ],
                 ),
               ),
-              const SizedBox(height: 20), // Beri sedikit jarak akhir isi form
+              const SizedBox(height: 40), 
             ],
           ),
         ),
       
       // --- PERBAIKAN UTAMA: TOMBOL PINDAH KE BAWAH SCR KUNCI & AMAN DARI NAVIGASI HP ---
       bottomNavigationBar: _isLoading 
-          ? const SizedBox.shrink() // Sembunyikan tombol saat loading simpan
+          ? const SizedBox.shrink() 
           : SafeArea(
               child: Padding(
-                padding: const EdgeInsets.only(left: 20.0, right: 20.0, bottom: 12.0, top: 4.0),
+                padding: const EdgeInsets.only(left: 20.0, right: 20.0, bottom: 16.0, top: 4.0),
                 child: Row(
                   children: [
                     Expanded(
+                      flex: 2,
                       child: SizedBox(
-                        height: 50,
-                        child: OutlinedButton(
+                        height: 52,
+                        child: ElevatedButton(
                           onPressed: () => Navigator.pop(context),
-                          style: OutlinedButton.styleFrom(
-                            side: const BorderSide(color: Colors.black12),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.white,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                              side: BorderSide(color: Colors.grey.shade300),
+                            ),
                           ),
-                          child: const Text("Batal", style: TextStyle(color: Colors.black54, fontWeight: FontWeight.bold)),
+                          child: const Text("Batal", style: TextStyle(color: Colors.black54, fontWeight: FontWeight.bold, fontSize: 15)),
                         ),
                       ),
                     ),
-                    const SizedBox(width: 16),
+                    const SizedBox(width: 12),
                     Expanded(
+                      flex: 3,
                       child: SizedBox(
-                        height: 50,
-                        child: ElevatedButton.icon(
+                        height: 52,
+                        child: ElevatedButton(
                           onPressed: _simpanLaporan,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: primaryColor,
-                            elevation: 0,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            elevation: 4,
+                            shadowColor: primaryColor.withOpacity(0.4),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                           ),
-                          icon: const Icon(Icons.check, color: Colors.white),
-                          label: const Text("Simpan", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                          child: const Text("Kirim Laporan", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15)),
                         ),
                       ),
                     ),
@@ -323,7 +338,7 @@ class _LaporanKendalaPageState extends State<LaporanKendalaPage> {
   Widget _buildLabel(String text) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8, left: 4),
-      child: Text(text, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black54)),
+      child: Text(text, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF264653))),
     );
   }
 
@@ -331,16 +346,22 @@ class _LaporanKendalaPageState extends State<LaporanKendalaPage> {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.black12),
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
-      child: TextField(
+      child: TextFormField(
         controller: controller,
         maxLines: maxLines,
         decoration: InputDecoration(
           hintText: hint,
-          hintStyle: const TextStyle(color: Colors.grey, fontSize: 14),
-          border: InputBorder.none,
+          hintStyle: const TextStyle(color: Colors.grey, fontSize: 13),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
           contentPadding: const EdgeInsets.all(16),
         ),
       ),

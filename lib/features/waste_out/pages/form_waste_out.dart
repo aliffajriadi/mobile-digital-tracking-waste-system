@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:mobile/core/constants/api_constants.dart';
+import 'package:mobile/core/widgets/ruler_picker_modal.dart';
 
 class FormInputKeluarPage extends StatefulWidget {
   final Map<String, dynamic> selectedMethod;
@@ -21,6 +22,8 @@ class _FormInputKeluarPageState extends State<FormInputKeluarPage> {
   final TextEditingController _catatanController = TextEditingController();
   final TextEditingController _qtyController = TextEditingController();
 
+  double _sliderValue = 0.0;
+
   // Variabel Fitur Waktu (Bisa Di-edit)
   DateTime _waktuKeluar = DateTime.now();
 
@@ -31,16 +34,51 @@ class _FormInputKeluarPageState extends State<FormInputKeluarPage> {
   // Variabel Fitur Dropdown Jenis Sampah Dinamis
   List<dynamic> _subcategoriesList = [];
   String? _selectedSubcategoryName;
-  int? _selectedSubcategoryId;
+  dynamic _selectedSubcategoryId;
   bool _isLoadingSubcategories = true;
 
   List<Map<String, dynamic>> _daftarItemSampah = [];
   bool _isSaving = false;
 
+  // Variabel Ekstra Penjualan
+  List<dynamic> _buyersList = [];
+  String? _selectedBuyerName;
+  int? _selectedBuyerId;
+  final TextEditingController _revenueController = TextEditingController();
+
+  // Variabel Ekstra TPA
+  List<dynamic> _destinationsList = [];
+  String? _selectedDestinationName;
+  int? _selectedDestinationId;
+
   @override
   void initState() {
     super.initState();
     _fetchSubcategories();
+    _fetchBuyersAndDestinations();
+  }
+
+  Future<void> _fetchBuyersAndDestinations() async {
+    try {
+      final methodStr = widget.selectedMethod['name'].toString().toLowerCase();
+      if (methodStr.contains('penjualan')) {
+        final res = await http.get(Uri.parse(ApiConstants.wasteBuyers));
+        if (res.statusCode == 200) {
+          final data = json.decode(res.body);
+          setState(() => _buyersList = data['data'] ?? []);
+        }
+      }
+      
+      if (methodStr.contains('tpa') || methodStr.contains('buang')) {
+        final res = await http.get(Uri.parse(ApiConstants.wasteDestinations));
+        if (res.statusCode == 200) {
+          final data = json.decode(res.body);
+          setState(() => _destinationsList = data['data'] ?? []);
+        }
+      }
+    } catch (e) {
+      debugPrint("Error fetching extra fields: $e");
+    }
   }
 
   // --- AMBIL DATA SUBKATEGORI UNTUK DROPDOWN ---
@@ -48,17 +86,28 @@ class _FormInputKeluarPageState extends State<FormInputKeluarPage> {
     try {
       final response = await http.get(Uri.parse('${ApiConstants.baseUrl}/waste-subcategories'));
 
-      debugPrint('Status Code Dropdown: ${response.statusCode}');
-      debugPrint('Response Body Dropdown: ${response.body}');
-
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
+        List<dynamic> raw = [];
+        if (data is Map && data.containsKey('data')) {
+          raw = data['data'] ?? [];
+        } else if (data is List) {
+          raw = data;
+        } 
+        
+        final resProc = await http.get(Uri.parse(ApiConstants.processedWaste));
+        List<dynamic> proc = [];
+        if (resProc.statusCode == 200) {
+           final procData = json.decode(resProc.body);
+           proc = procData['data'] ?? [];
+           proc = proc.map((e) => {
+              'id': 'p_${e['id']}',
+              'name': e['name'] + ' (Hasil Olahan)',
+           }).toList();
+        }
+
         setState(() {
-          if (data is Map && data.containsKey('data')) {
-            _subcategoriesList = data['data'] ?? [];
-          } else if (data is List) {
-            _subcategoriesList = data;
-          } 
+          _subcategoriesList = [...raw, ...proc];
           _isLoadingSubcategories = false;
         });
       } else {
@@ -133,6 +182,7 @@ class _FormInputKeluarPageState extends State<FormInputKeluarPage> {
     setState(() {
       _selectedSubcategoryName = null;
       _selectedSubcategoryId = null;
+      _sliderValue = 0.0;
     });
     Navigator.pop(context);
   }
@@ -162,10 +212,18 @@ class _FormInputKeluarPageState extends State<FormInputKeluarPage> {
       // Mengirimkan ID sesuai blueprint database asli laravel kamu
       request.fields['id_waste_out_method'] = widget.selectedMethod['id'].toString();
       
-      // Mengirimkan ID tujuan jika ada di widget.selectedMethod, jika tidak ada, kirim string kosong agar divalidasi sebagai null di Laravel
-      String? destinationId = widget.selectedMethod['id_waste_destination']?.toString();
-      if (destinationId != null) {
-        request.fields['id_waste_destination'] = destinationId;
+      if (_selectedDestinationId != null) {
+        request.fields['id_waste_destination'] = _selectedDestinationId.toString();
+      } else {
+        String? destinationId = widget.selectedMethod['id_waste_destination']?.toString();
+        if (destinationId != null) {
+          request.fields['id_waste_destination'] = destinationId;
+        }
+      }
+
+      if (_selectedBuyerId != null) {
+        request.fields['id_buyer'] = _selectedBuyerId.toString();
+        request.fields['total_revenue'] = _revenueController.text;
       }
 
       request.fields['notes'] = _catatanController.text;
@@ -269,10 +327,56 @@ class _FormInputKeluarPageState extends State<FormInputKeluarPage> {
                             ),
                           ),
                 const SizedBox(height: 12),
-                TextField(
-                  controller: _qtyController,
-                  keyboardType: TextInputType.number,
-                  decoration: InputDecoration(hintText: 'Kuantitas (Kilo)', suffixText: 'kg', border: OutlineInputBorder(borderRadius: BorderRadius.circular(10))),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white, 
+                          borderRadius: BorderRadius.circular(14),
+                          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 4))]
+                        ),
+                        child: TextField(
+                          controller: _qtyController,
+                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                          decoration: InputDecoration(
+                            hintText: 'Kuantitas (Kilo)', 
+                            suffixText: 'kg', 
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Material(
+                      color: const Color(0xFFE76F51),
+                      borderRadius: BorderRadius.circular(14),
+                      elevation: 2,
+                      shadowColor: const Color(0xFFE76F51).withOpacity(0.4),
+                      child: InkWell(
+                        onTap: () async {
+                          double currentVal = double.tryParse(_qtyController.text.replaceAll(',', '.')) ?? 0.0;
+                          final result = await showRulerPickerModal(
+                            context,
+                            initialValue: currentVal,
+                            max: 500.0,
+                            unit: 'kg',
+                          );
+                          if (result != null) {
+                            setModalState(() {
+                              _qtyController.text = result.toStringAsFixed(1);
+                            });
+                          }
+                        },
+                        borderRadius: BorderRadius.circular(10),
+                        child: const Padding(
+                          padding: EdgeInsets.all(15),
+                          child: Icon(Icons.straighten_rounded, color: Colors.white),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 20),
                 SizedBox(
@@ -302,8 +406,10 @@ class _FormInputKeluarPageState extends State<FormInputKeluarPage> {
       backgroundColor: const Color(0xFFF4F7F9),
       appBar: AppBar(
         backgroundColor: primaryOutColor,
-        title: Text('Input Keluar: ${widget.selectedMethod['name']}'),
-        leading: IconButton(icon: const Icon(Icons.arrow_back, color: Colors.white), onPressed: () => Navigator.pop(context)),
+        elevation: 0,
+        centerTitle: true,
+        title: Text('Input Keluar: ${widget.selectedMethod['name']}', style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+        leading: IconButton(icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20), onPressed: () => Navigator.pop(context)),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
@@ -319,7 +425,11 @@ class _FormInputKeluarPageState extends State<FormInputKeluarPage> {
                 onTap: _pilihWaktu,
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12)),
+                  decoration: BoxDecoration(
+                    color: Colors.white, 
+                    borderRadius: BorderRadius.circular(14),
+                    boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 4))]
+                  ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -331,16 +441,96 @@ class _FormInputKeluarPageState extends State<FormInputKeluarPage> {
               ),
               const SizedBox(height: 20),
 
+              // --- CONDITIONAL FIELDS BERDASARKAN METODE ---
+              if (widget.selectedMethod['name'].toString().toLowerCase().contains('penjualan')) ...[
+                const Text('Informasi Penjualan', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF264653))),
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 4))]),
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<String>(
+                      value: _selectedBuyerName,
+                      hint: const Text('Pilih Pemborang / Pembeli'),
+                      isExpanded: true,
+                      items: _buyersList.map((item) {
+                        return DropdownMenuItem<String>(value: item['name'], child: Text(item['name']));
+                      }).toList(),
+                      onChanged: (val) {
+                        final selected = _buyersList.firstWhere((e) => e['name'] == val, orElse: () => null);
+                        if (selected != null) {
+                          setState(() {
+                            _selectedBuyerName = val;
+                            _selectedBuyerId = selected['id'];
+                          });
+                        }
+                      },
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Container(
+                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 4))]),
+                  child: TextFormField(
+                    controller: _revenueController,
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(
+                      hintText: 'Total Pendapatan (Rp)',
+                      prefixText: 'Rp ',
+                      filled: true, fillColor: Colors.white,
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+              ],
+
+              if (widget.selectedMethod['name'].toString().toLowerCase().contains('tpa') || widget.selectedMethod['name'].toString().toLowerCase().contains('buang')) ...[
+                const Text('Tujuan TPA', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF264653))),
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 4))]),
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<String>(
+                      value: _selectedDestinationName,
+                      hint: const Text('Pilih Tempat Tujuan TPA'),
+                      isExpanded: true,
+                      items: _destinationsList.map((item) {
+                        return DropdownMenuItem<String>(value: item['name'], child: Text(item['name']));
+                      }).toList(),
+                      onChanged: (val) {
+                        final selected = _destinationsList.firstWhere((e) => e['name'] == val, orElse: () => null);
+                        if (selected != null) {
+                          setState(() {
+                            _selectedDestinationName = val;
+                            _selectedDestinationId = selected['id'];
+                          });
+                        }
+                      },
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+              ],
+
               // --- FORM INFORMASI PENGELUARAN ---
               const Text('Informasi Pengeluaran', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF264653))),
               const SizedBox(height: 8),
-              TextFormField(
-                controller: _catatanController,
-                maxLines: 3,
-                decoration: InputDecoration(
-                  hintText: 'Catatan tambahan pengeluaran...',
-                  filled: true, fillColor: Colors.white,
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.white, 
+                  borderRadius: BorderRadius.circular(14),
+                  boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 4))]
+                ),
+                child: TextFormField(
+                  controller: _catatanController,
+                  maxLines: 3,
+                  decoration: InputDecoration(
+                    hintText: 'Catatan tambahan pengeluaran...',
+                    filled: true, fillColor: Colors.white,
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
+                  ),
                 ),
               ),
               const SizedBox(height: 20),
@@ -365,7 +555,11 @@ class _FormInputKeluarPageState extends State<FormInputKeluarPage> {
                   },
                   child: Container(
                     height: 150, width: double.infinity,
-                    decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.grey.shade300)),
+                    decoration: BoxDecoration(
+                      color: Colors.white, 
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 4))]
+                    ),
                     child: _imageFile != null
                         ? ClipRRect(borderRadius: BorderRadius.circular(12), child: Image.file(_imageFile!, fit: BoxFit.cover))
                         : const Column(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(Icons.camera_alt_outlined, size: 40, color: Colors.grey), SizedBox(height: 8), Text('Ketuk untuk ambil/pilih foto', style: TextStyle(color: Colors.grey, fontSize: 12))]),
@@ -400,9 +594,11 @@ class _FormInputKeluarPageState extends State<FormInputKeluarPage> {
                       itemBuilder: (context, idx) {
                         final item = _daftarItemSampah[idx];
                         return Card(
-                          color: Colors.white, elevation: 0,
-                          margin: const EdgeInsets.only(bottom: 8),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          color: Colors.white,
+                          elevation: 0,
+                          margin: const EdgeInsets.only(bottom: 12),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                          shadowColor: Colors.black.withOpacity(0.1),
                           child: ListTile(
                             leading: IconButton(icon: const Icon(Icons.delete_outline, color: Colors.red), onPressed: () => setState(() => _daftarItemSampah.removeAt(idx))),
                             title: Text(item['name'] ?? '-', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),

@@ -43,8 +43,8 @@ class HistoryCard extends StatelessWidget {
       child: InkWell(
         borderRadius: BorderRadius.circular(14),
         onTap: () {
-          final int? parsedId = item['id_laporan'] != null 
-              ? int.tryParse(item['id_laporan'].toString()) 
+          final int? parsedId = item['id'] != null 
+              ? int.tryParse(item['id'].toString()) 
               : null;
 
           if (parsedId == null) {
@@ -54,12 +54,18 @@ class HistoryCard extends StatelessWidget {
             return;
           }
 
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => DetailLaporanPage(idLaporan: parsedId),
-            ),
-          );
+          if (tipe == 'input_masuk') {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => DetailLaporanPage(idLaporan: parsedId),
+              ),
+            );
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text("Detail riwayat hanya tersedia untuk Sampah Masuk saat ini.")),
+            );
+          }
         },
 
         child: Padding(

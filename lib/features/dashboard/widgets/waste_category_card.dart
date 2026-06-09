@@ -19,15 +19,28 @@ class WasteCategoryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 10),
+      margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(12),
+        gradient: LinearGradient(
+          colors: [color, color.withOpacity(0.8)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: color.withOpacity(0.3),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(16),
+          child: Padding(
           padding: const EdgeInsets.all(14),
           child: Row(
             children: [
@@ -70,6 +83,7 @@ class WasteCategoryCard extends StatelessWidget {
             ],
           ),
         ),
+      ),
       ),
     );
   }

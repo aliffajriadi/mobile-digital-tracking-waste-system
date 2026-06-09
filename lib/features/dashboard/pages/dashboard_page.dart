@@ -172,16 +172,22 @@ class _DashboardPageState extends State<DashboardPage> {
                         crossAxisAlignment:
                             CrossAxisAlignment.start,
                         children: [
-                          const Text(
-                            'Lapor Sampah Harian Sekarang',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w700,
-                              color: Color(0xFF1E293B),
-                            ),
+                          Row(
+                            children: const [
+                              Icon(Icons.category_rounded, size: 18, color: Color(0xFF1E293B)),
+                              SizedBox(width: 8),
+                              Text(
+                                'Kategori Laporan Sampah',
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF1E293B),
+                                ),
+                              ),
+                            ],
                           ),
 
-                          const SizedBox(height: 12),
+                          const SizedBox(height: 14),
 
                           if (_isLoading)
                             const Center(
@@ -224,18 +230,24 @@ class _DashboardPageState extends State<DashboardPage> {
                               }).toList(),
                             ),
 
-                          const SizedBox(height: 24),
+                          const SizedBox(height: 28),
 
-                          const Text(
-                            'Riwayat Hari Ini',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w700,
-                              color: Color(0xFF1E293B),
-                            ),
+                          Row(
+                            children: const [
+                              Icon(Icons.history_rounded, size: 18, color: Color(0xFF1E293B)),
+                              SizedBox(width: 8),
+                              Text(
+                                'Riwayat Hari Ini',
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF1E293B),
+                                ),
+                              ),
+                            ],
                           ),
 
-                          const SizedBox(height: 12),
+                          const SizedBox(height: 14),
 
                           if (_isLoading)
                             const Center(

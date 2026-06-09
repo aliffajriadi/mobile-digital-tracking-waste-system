@@ -26,6 +26,7 @@ class SettingsPage extends StatefulWidget {
 class _SettingsPageState extends State<SettingsPage> {
   String _userName = 'Memuat...';
   String _userNik = '-';
+  String? _userPhoto;
 
   @override
   void initState() {
@@ -41,6 +42,7 @@ class _SettingsPageState extends State<SettingsPage> {
     setState(() {
       _userName = prefs.getString('user_name') ?? 'Nama Karyawan';
       _userNik = prefs.getString('user_nik') ?? '-';
+      _userPhoto = prefs.getString('user_profile_text');
     });
   }
 
@@ -201,6 +203,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     SettingsProfileSection(
                       userName: _userName,
                       userNik: _userNik,
+                      userPhoto: _userPhoto,
                     ),
                     const SizedBox(height: 30),
                     SettingsMenuGroup(
