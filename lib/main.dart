@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'core/theme/app_theme.dart';
-import 'features/auth/pages/login_page.dart';
+import 'features/auth/pages/splash_page.dart';
 
 void main() {
   runApp(const WasteTrackApp());
@@ -15,7 +15,7 @@ class WasteTrackApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'WasteTrack',
       theme: AppTheme.lightTheme,
-      home: const LoginPage(),
+      home: const SplashPage(),
     );
   }
 }

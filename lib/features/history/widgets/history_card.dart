@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../pages/detail_waste_page.dart'; 
+import '../pages/detail_kendala_page.dart';
 
 class HistoryCard extends StatelessWidget {
   final Map<String, dynamic> item;
@@ -61,9 +62,16 @@ class HistoryCard extends StatelessWidget {
                 builder: (context) => DetailLaporanPage(idLaporan: parsedId),
               ),
             );
+          } else if (tipe == 'kendala') {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => DetailKendalaPage(idLaporan: parsedId),
+              ),
+            );
           } else {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text("Detail riwayat hanya tersedia untuk Sampah Masuk saat ini.")),
+              const SnackBar(content: Text("Detail riwayat hanya tersedia untuk Sampah Masuk dan Kendala saat ini.")),
             );
           }
         },
