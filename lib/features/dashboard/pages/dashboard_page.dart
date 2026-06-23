@@ -38,13 +38,55 @@ class _DashboardPageState extends State<DashboardPage> {
     _fetchDashboardData();
   }
 
-  Future<void> _fetchDashboardData() async {
+  Future<void> _fetchDashboardData({bool forceRefresh = false}) async {
     try {
       if (!mounted) return;
 
-      setState(() => _isLoading = true);
-
       final prefs = await SharedPreferences.getInstance();
+      
+      // 1. Cek Cache Dulu Jika Tidak Force Refresh
+      if (!forceRefresh) {
+        final cachedData = prefs.getString('dashboard_cache');
+        if (cachedData != null && cachedData.isNotEmpty) {
+          final data = jsonDecode(cachedData);
+          if (mounted) {
+            setState(() {
+              _namaPetugas = data['full_name'] ?? '';
+              _fotoProfil = data['user_photo'];
+              _kategoriSampah = data['categories'] ?? [];
+              _riwayatHariIni = data['recent_entries'] ?? [];
+              _totalMasuk = data['today_summary']?['total_masuk'] ?? 0;
+              _sampahKeluar = data['today_summary']?['sampah_keluar'] ?? 0;
+              _sudahDiolah = data['today_summary']?['sudah_diolah'] ?? 0;
+              _isLoading = false;
+            });
+          }
+          // Biarkan fetch background berjalan tanpa loading spinner untuk update cache
+          _fetchFromApi(prefs, false);
+          return;
+        }
+      }
+
+      // Jika tidak ada cache atau force refresh, tampilkan loading & fetch
+      setState(() => _isLoading = true);
+      await _fetchFromApi(prefs, true);
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _namaPetugas = 'Gagal Terhubung';
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _fetchFromApi(SharedPreferences prefs, bool updateStateLoading) async {
+    try {
+      if (!mounted) return;
+
+      if (updateStateLoading && mounted) {
+        setState(() => _isLoading = true);
+      }
+
       final token = prefs.getString('token') ?? '';
 
       final response = await http.get(
@@ -61,7 +103,11 @@ class _DashboardPageState extends State<DashboardPage> {
       final data = jsonDecode(response.body);
 
       if (response.statusCode == 200 && data['success'] == true) {
-        setState(() {
+        // Simpan ke Cache
+        prefs.setString('dashboard_cache', response.body);
+
+        if (mounted) {
+          setState(() {
           _namaPetugas = data['full_name'] ?? '';
           _fotoProfil = data['user_photo'];
 
@@ -79,14 +125,17 @@ class _DashboardPageState extends State<DashboardPage> {
 
           _isLoading = false;
         });
+        }
       } else {
-        setState(() {
-          _namaPetugas = data['message'] ?? 'Gagal memuat data';
-          _isLoading = false;
-        });
+        if (mounted && updateStateLoading) {
+          setState(() {
+            _namaPetugas = data['message'] ?? 'Gagal memuat data';
+            _isLoading = false;
+          });
+        }
       }
     } catch (_) {
-      if (!mounted) return;
+      if (!mounted && updateStateLoading) return;
 
       setState(() {
         _namaPetugas = 'Gagal Terhubung';
@@ -127,6 +176,18 @@ class _DashboardPageState extends State<DashboardPage> {
     };
   }
 
+  String _formatQuantity(dynamic qty) {
+    if (qty == null) return '0';
+    String str = qty.toString();
+    if (str.contains('.')) {
+      str = str.replaceAll(RegExp(r'0*$'), '');
+      if (str.endsWith('.')) {
+        str = str.substring(0, str.length - 1);
+      }
+    }
+    return str.isEmpty ? '0' : str;
+  }
+
   @override
   Widget build(BuildContext context) {
     const primaryColor = Color(0xFF14A38B);
@@ -135,7 +196,7 @@ class _DashboardPageState extends State<DashboardPage> {
       backgroundColor: const Color(0xFFF4F7F9),
       body: RefreshIndicator(
         color: primaryColor,
-        onRefresh: _fetchDashboardData,
+        onRefresh: () => _fetchDashboardData(forceRefresh: true),
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           child: Stack(
@@ -291,10 +352,8 @@ class _DashboardPageState extends State<DashboardPage> {
                                       item['source_location']
                                               ?['name'] ??
                                           'Lokasi',
-                                  quantity:
-                                      item['measured_qty']
-                                              ?.toString() ??
-                                          '0',
+                                  quantity: _formatQuantity(
+                                      item['measured_qty']),
                                   unit: item[
                                                   'sub_category']
                                               ?[

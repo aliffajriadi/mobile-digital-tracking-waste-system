@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../services/history_service.dart';
 import '../widgets/history_card.dart';
 import '../widgets/filter_bottom_sheet.dart';
@@ -27,15 +29,44 @@ class _RiwayatPageState extends State<RiwayatPage> {
     _getRiwayatData();
   }
 
-  Future<void> _getRiwayatData() async {
+  Future<void> _getRiwayatData({bool forceRefresh = false}) async {
     if (!mounted) return;
-    setState(() => _isLoading = true);
 
+    final prefs = await SharedPreferences.getInstance();
+    final cacheKey = 'history_cache_${_selectedCategoryId ?? "all"}_$_searchQuery';
+
+    if (!forceRefresh) {
+      final cachedStr = prefs.getString(cacheKey);
+      if (cachedStr != null && cachedStr.isNotEmpty) {
+        final resData = json.decode(cachedStr);
+        if (mounted) {
+          setState(() {
+            _groupedRiwayat = Map<String, dynamic>.from(resData['data'] ?? {});
+            _categories = resData['categories'] ?? [];
+            _isLoading = false;
+          });
+        }
+        _fetchFromApi(cacheKey, false);
+        return;
+      }
+    }
+
+    setState(() => _isLoading = true);
+    await _fetchFromApi(cacheKey, true);
+  }
+
+  Future<void> _fetchFromApi(String cacheKey, bool updateStateLoading) async {
     try {
+      if (!mounted) return;
+      if (updateStateLoading) setState(() => _isLoading = true);
+
       final resData = await _historyService.fetchRiwayatLaporan(
         searchQuery: _searchQuery,
         selectedCategoryId: _selectedCategoryId,
       );
+
+      final prefs = await SharedPreferences.getInstance();
+      prefs.setString(cacheKey, json.encode(resData));
 
       if (mounted) {
         setState(() {
@@ -46,7 +77,7 @@ class _RiwayatPageState extends State<RiwayatPage> {
       }
     } catch (e) {
       debugPrint("Error get riwayat view: $e");
-      if (mounted) setState(() => _isLoading = false);
+      if (mounted && updateStateLoading) setState(() => _isLoading = false);
     }
   }
 
@@ -156,24 +187,32 @@ class _RiwayatPageState extends State<RiwayatPage> {
 
           // Area Tampilan Data Log Berkelompok Tanggal
           Expanded(
-            child: _isLoading
-                ? const Center(child: CircularProgressIndicator(color: primaryColor))
-                : tanggalList.isEmpty
-                    ? Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
+            child: RefreshIndicator(
+              color: primaryColor,
+              onRefresh: () => _getRiwayatData(forceRefresh: true),
+              child: _isLoading
+                  ? const Center(child: CircularProgressIndicator(color: primaryColor))
+                  : tanggalList.isEmpty
+                      ? ListView(
+                          physics: const AlwaysScrollableScrollPhysics(),
                           children: [
-                            Icon(Icons.history_toggle_off_rounded, size: 60, color: Colors.grey.shade400),
-                            const SizedBox(height: 12),
-                            const Text(
-                              "Tidak ada data riwayat ditemukan",
-                              style: TextStyle(color: Colors.grey, fontWeight: FontWeight.w500),
+                            SizedBox(height: MediaQuery.of(context).size.height * 0.3),
+                            Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.history_toggle_off_rounded, size: 60, color: Colors.grey.shade400),
+                                const SizedBox(height: 12),
+                                const Text(
+                                  "Tidak ada data riwayat ditemukan",
+                                  style: TextStyle(color: Colors.grey, fontWeight: FontWeight.w500),
+                                ),
+                              ],
                             ),
                           ],
-                        ),
-                      )
-                    : ListView.builder(
-                        padding: const EdgeInsets.all(16),
+                        )
+                      : ListView.builder(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          padding: const EdgeInsets.all(16),
                         itemCount: tanggalList.length,
                         itemBuilder: (context, index) {
                           final String tanggal = tanggalList[index];
@@ -203,6 +242,7 @@ class _RiwayatPageState extends State<RiwayatPage> {
                           );
                         },
                       ),
+            ),
           ),
         ],
       ),
