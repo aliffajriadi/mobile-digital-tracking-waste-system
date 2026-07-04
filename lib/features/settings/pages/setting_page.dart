@@ -15,6 +15,7 @@ import 'edit_profile_page.dart';
 import 'change_password_page.dart';
 import 'notification_page.dart';
 import 'help_center_page.dart';
+import '../../iot/pages/iot_pairing_page.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -142,7 +143,12 @@ class _SettingsPageState extends State<SettingsPage> {
         icon: Icons.router_outlined,
         title: 'Integrasi IoT',
         onTap: () {
-          // TODO:
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => const IotPairingPage(),
+            ),
+          );
         },
       ),
     ];
