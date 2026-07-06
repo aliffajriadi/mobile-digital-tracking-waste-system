@@ -3,6 +3,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:mobile/core/theme/app_theme.dart';
 import 'package:mobile/features/auth/pages/login_page.dart';
+import 'package:http/http.dart' as http;
+import 'package:mobile/core/constants/api_constants.dart';
 
 import '../models/settings_menu_model.dart';
 
@@ -66,6 +68,20 @@ class _SettingsPageState extends State<SettingsPage> {
             TextButton(
               onPressed: () async {
                 final prefs = await SharedPreferences.getInstance();
+
+                final token = prefs.getString('token') ?? '';
+                
+                try {
+                  await http.post(
+                    Uri.parse(ApiConstants.logout),
+                    headers: {
+                      'Authorization': 'Bearer $token',
+                      'Accept': 'application/json',
+                    },
+                  );
+                } catch (e) {
+                  // Lanjut hapus preferensi jika gagal API call (mungkin network error)
+                }
 
                 await prefs.clear();
 

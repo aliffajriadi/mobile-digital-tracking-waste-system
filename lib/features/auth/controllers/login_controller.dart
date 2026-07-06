@@ -22,6 +22,7 @@ class LoginController {
     // 4. Simpan ke SharedPreferences
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('token', token);
+    await prefs.setInt('user_id', user.id);
     await prefs.setString('user_name', user.fullName);
     await prefs.setString('user_nik', user.nik);
     await prefs.setString('user_email', user.email);

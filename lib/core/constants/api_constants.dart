@@ -1,6 +1,6 @@
 class ApiConstants {
   // 1. Alamat Host Utama (Cukup ubah IP di sini jika laptop ganti Wi-Fi)
-  static const String host = 'https://pbl.anjay.fun';
+  static const String host = 'http://192.168.1.7:8000';
 
   // 2. Base URL untuk Endpoint API & Storage File
   // (Ditambahkan ApiConstants.host agar Dart tidak bingung dan tidak error)
@@ -10,6 +10,7 @@ class ApiConstants {
   // 3. KUMPULAN ENDPOINT GLOBAL
   // Autentikasi & Akun
   static const String login = '$baseUrl/login';
+  static const String logout = '$baseUrl/logout';
   static const String changePassword = '$baseUrl/change-password';
   static const String updateProfile = '$baseUrl/update-profile';
 
@@ -38,4 +39,8 @@ class ApiConstants {
   static const String wasteDestinations = '$baseUrl/waste-destinations';
 
   static const String wasteB3Notifications = '$baseUrl/waste-b3-notifications';
+
+  // IoT
+  static const String iotPair = '$baseUrl/iot/pair';
+  static const String iotUnpair = '$baseUrl/iot/unpair';
 }
