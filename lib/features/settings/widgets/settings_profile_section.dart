@@ -1,7 +1,5 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:mobile/core/theme/app_theme.dart';
-import 'package:mobile/core/constants/api_constants.dart';
 
 class SettingsProfileSection extends StatelessWidget {
   final String userName;
@@ -14,6 +12,31 @@ class SettingsProfileSection extends StatelessWidget {
     required this.userNik,
     this.userPhoto,
   });
+
+  Color _getAvatarColor(String name) {
+    final colors = [
+      const Color(0xFF14A38B),
+      const Color(0xFFE26B50),
+      const Color(0xFF2563EB),
+      const Color(0xFF7C3AED),
+      const Color(0xFFDB2777),
+      const Color(0xFF059669),
+      const Color(0xFFD97706),
+    ];
+    if (name.isEmpty) return colors[0];
+    final hash = name.codeUnits.fold(0, (prev, element) => prev + element);
+    return colors[hash % colors.length];
+  }
+
+  String _getInitials(String name) {
+    final trimmed = name.trim();
+    if (trimmed.isEmpty) return '?';
+    final parts = trimmed.split(RegExp(r'\s+'));
+    if (parts.length > 1) {
+      return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
+    }
+    return parts[0][0].toUpperCase();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -30,17 +53,15 @@ class SettingsProfileSection extends StatelessWidget {
           ),
           child: CircleAvatar(
             radius: 50,
-            backgroundColor: const Color(0xFFE2E8F0),
-            backgroundImage: userPhoto != null 
-                ? (userPhoto!.startsWith('/') || userPhoto!.startsWith('file://')
-                    ? FileImage(File(userPhoto!)) as ImageProvider
-                    : NetworkImage("${ApiConstants.storageUrl}/$userPhoto"))
-                : null,
-            child: userPhoto == null ? const Icon(
-              Icons.person,
-              size: 55,
-              color: Colors.grey,
-            ) : null,
+            backgroundColor: _getAvatarColor(userName),
+            child: Text(
+              _getInitials(userName),
+              style: const TextStyle(
+                fontSize: 32,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
           ),
         ),
         const SizedBox(height: 14),

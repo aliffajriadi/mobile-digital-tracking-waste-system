@@ -292,13 +292,28 @@ class _LaporanDataHarianPageState extends State<LaporanDataHarianPage> {
     );
   }
 
+  String _formatJumlah(String? rawJumlah) {
+    if (rawJumlah == null) return '0 Kg';
+    final numericRegex = RegExp(r'[-+]?\d*\.?\d+');
+    final match = numericRegex.firstMatch(rawJumlah);
+    if (match != null) {
+      final numberStr = match.group(0)!;
+      final numberVal = double.tryParse(numberStr) ?? 0.0;
+      if (numberVal < 0) {
+        final unitPart = rawJumlah.replaceAll(numberStr, '').trim();
+        return '0 $unitPart'.trim();
+      }
+    }
+    return rawJumlah;
+  }
+
   // Struktur navigasi klik item log kartu
   Widget _buildItemInkWell(Map<String, dynamic> item, Color arrowColor) {
     return InkWell(
       onTap: () {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text("Stok ${item['kategori'] ?? ''}: ${item['jumlah'] ?? '0'}"),
+            content: Text("Stok ${item['kategori'] ?? ''}: ${_formatJumlah(item['jumlah'])}"),
             duration: const Duration(seconds: 2),
             behavior: SnackBarBehavior.floating,
           )
@@ -358,7 +373,7 @@ class _LaporanDataHarianPageState extends State<LaporanDataHarianPage> {
             children: [
               const Text("Stok Tersedia", style: TextStyle(fontSize: 10, color: Colors.grey)),
               Text(
-                item['jumlah'] ?? '0', 
+                _formatJumlah(item['jumlah']), 
                 style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFF264653))
               ),
             ],

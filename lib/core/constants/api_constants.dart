@@ -1,6 +1,6 @@
 class ApiConstants {
   // 1. Alamat Host Utama (Cukup ubah IP di sini jika laptop ganti Wi-Fi)
-  static const String host = 'http://192.168.1.7:8000';
+  static const String host = 'https://pbl.anjay.fun';
 
   // 2. Base URL untuk Endpoint API & Storage File
   // (Ditambahkan ApiConstants.host agar Dart tidak bingung dan tidak error)

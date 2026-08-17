@@ -1,6 +1,4 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
-import '../../../core/constants/api_constants.dart';
 
 class ProfileHeader extends StatelessWidget {
   final String name;
@@ -16,6 +14,31 @@ class ProfileHeader extends StatelessWidget {
     required this.onPhotoTap,
   });
 
+  Color _getAvatarColor(String name) {
+    final colors = [
+      const Color(0xFF14A38B),
+      const Color(0xFFE26B50),
+      const Color(0xFF2563EB),
+      const Color(0xFF7C3AED),
+      const Color(0xFFDB2777),
+      const Color(0xFF059669),
+      const Color(0xFFD97706),
+    ];
+    if (name.isEmpty) return colors[0];
+    final hash = name.codeUnits.fold(0, (prev, element) => prev + element);
+    return colors[hash % colors.length];
+  }
+
+  String _getInitials(String name) {
+    final trimmed = name.trim();
+    if (trimmed.isEmpty) return '?';
+    final parts = trimmed.split(RegExp(r'\s+'));
+    if (parts.length > 1) {
+      return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
+    }
+    return parts[0][0].toUpperCase();
+  }
+
   @override
   Widget build(BuildContext context) {
     const primaryColor = Color(0xFF14A38B);
@@ -24,49 +47,29 @@ class ProfileHeader extends StatelessWidget {
       offset: const Offset(0, -30),
       child: Column(
         children: [
-          GestureDetector(
-            onTap: onPhotoTap,
-            child: Stack(
-              alignment: Alignment.bottomRight,
-              children: [
-                Container(
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white, width: 4),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.06),
-                        blurRadius: 12,
-                        offset: const Offset(0, 4),
-                      )
-                    ],
-                  ),
-                  child: CircleAvatar(
-                    radius: 50,
-                    backgroundColor: const Color(0xFFE2E8F0),
-                    backgroundImage: imageUrl != null
-                        ? (imageUrl!.startsWith('/') || imageUrl!.startsWith('file://')
-                            ? FileImage(File(imageUrl!)) as ImageProvider
-                            : NetworkImage("${ApiConstants.storageUrl}/$imageUrl"))
-                        : null,
-                    child: imageUrl == null
-                        ? const Icon(Icons.person, size: 55, color: Colors.grey)
-                        : null,
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: const BoxDecoration(
-                    color: primaryColor,
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.camera_alt_rounded,
-                    color: Colors.white,
-                    size: 16,
-                  ),
-                ),
+          Container(
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.white, width: 4),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.06),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                )
               ],
+            ),
+            child: CircleAvatar(
+              radius: 50,
+              backgroundColor: _getAvatarColor(name),
+              child: Text(
+                _getInitials(name),
+                style: const TextStyle(
+                  fontSize: 32,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
             ),
           ),
           const SizedBox(height: 12),

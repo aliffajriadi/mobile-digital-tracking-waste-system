@@ -5,6 +5,7 @@ class ProfileInputField extends StatelessWidget {
   final TextEditingController controller;
   final IconData icon;
   final TextInputType keyboardType;
+  final bool enabled;
 
   const ProfileInputField({
     super.key,
@@ -12,6 +13,7 @@ class ProfileInputField extends StatelessWidget {
     required this.controller,
     required this.icon,
     this.keyboardType = TextInputType.text,
+    this.enabled = true,
   });
 
   @override
@@ -34,17 +36,22 @@ class ProfileInputField extends StatelessWidget {
         TextField(
           controller: controller,
           keyboardType: keyboardType,
-          style: const TextStyle(
+          enabled: enabled,
+          style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w600,
-            color: Color(0xFF1E293B),
+            color: enabled ? const Color(0xFF1E293B) : const Color(0xFF64748B),
           ),
           decoration: InputDecoration(
             isDense: true,
             filled: true,
-            fillColor: const Color(0xFFF8FAFC),
+            fillColor: enabled ? const Color(0xFFF8FAFC) : const Color(0xFFE2E8F0),
             prefixIcon: Icon(icon, color: const Color(0xFF94A3B8), size: 20),
             contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
+            disabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(color: Color(0xFFCBD5E1), width: 1),
+            ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
               borderSide: const BorderSide(color: Color(0xFFE2E8F0), width: 1),

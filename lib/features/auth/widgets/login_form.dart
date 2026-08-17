@@ -63,12 +63,26 @@ class _LoginFormState extends State<LoginForm> {
       children: [
         // --- LOGO SECTION ---
         Container(
-          padding: const EdgeInsets.all(15),
+          padding: const EdgeInsets.all(8),
+          width: 80,
+          height: 80,
           decoration: const BoxDecoration(
-            color: Color(0xFF16B3AC),
+            color: Colors.white,
             shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black12,
+                blurRadius: 8,
+                offset: Offset(0, 2),
+              ),
+            ],
           ),
-          child: const Icon(Icons.home_work_outlined, size: 50, color: Colors.white),
+          child: ClipOval(
+            child: Image.asset(
+              'lib/images/logo.png',
+              fit: BoxFit.contain,
+            ),
+          ),
         ),
         const SizedBox(height: 12),
         const Text(

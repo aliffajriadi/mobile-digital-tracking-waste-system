@@ -52,15 +52,18 @@ class _SplashPageState extends State<SplashPage> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.all(12),
+              width: 120,
+              height: 120,
               decoration: const BoxDecoration(
                 color: Colors.white,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(
-                Icons.home_work_outlined,
-                size: 80,
-                color: Color(0xFF16B3AC),
+              child: ClipOval(
+                child: Image.asset(
+                  'lib/images/logo.png',
+                  fit: BoxFit.contain,
+                ),
               ),
             ),
             const SizedBox(height: 20),
