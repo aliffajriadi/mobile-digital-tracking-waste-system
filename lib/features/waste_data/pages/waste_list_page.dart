@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'select_input_page.dart';
-import '../../history/pages/detail_waste_page.dart';
 import 'package:mobile/core/constants/api_constants.dart';
 import 'package:shared_preferences/shared_preferences.dart'; 
 
@@ -21,7 +20,7 @@ class _LaporanDataHarianPageState extends State<LaporanDataHarianPage> {
   // --- Tambahan State Baru untuk Filter & Pencarian ---
   String _selectedKategori = 'Semua'; 
   String _searchQuery = '';
-  final List<String> _categories = ['Semua', 'Organik', 'Non Organik', 'B3'];
+  final List<String> _categories = ['Semua', 'Organik', 'Non Organik', 'B3', 'Hasil Olahan'];
 
   @override
   void initState() {
@@ -64,14 +63,15 @@ class _LaporanDataHarianPageState extends State<LaporanDataHarianPage> {
         final data = json.decode(response.body);
         
         if (data['success'] == true) {
+          final rawList = data['data'] ?? [];
           setState(() {
-            _laporanList = data['data'] ?? [];
+            _laporanList = rawList is List ? rawList : [];
             _isLoading = false;
           });
         } else {
           setState(() => _isLoading = false);
           debugPrint("Gagal dari API: ${data['message']}");
-          _loadMockDataFallback(); // Fallback data lokal jika API kamu belum diubah backend-nya
+          _loadMockDataFallback();
         }
       } else {
         if (mounted) setState(() => _isLoading = false);
@@ -85,7 +85,7 @@ class _LaporanDataHarianPageState extends State<LaporanDataHarianPage> {
     }
   }
 
-  // Helper jika API backend-mu belum siap mengirimkan struktur data 'Stok' baru
+  // Helper jika API backend belum siap mengirimkan data atau fallback
   void _loadMockDataFallback() {
     setState(() {
       _laporanList = [
@@ -93,21 +93,84 @@ class _LaporanDataHarianPageState extends State<LaporanDataHarianPage> {
         {"id": 2, "kategori": "Sisa Makanan", "jenis_kategori": "Organik", "jumlah": "45 Kg", "isBotol": false},
         {"id": 3, "kategori": "Botol Plastik", "jenis_kategori": "Non Organik", "jumlah": "300 Pcs", "isBotol": true},
         {"id": 4, "kategori": "Kardus Bekas", "jenis_kategori": "Non Organik", "jumlah": "85 Kg", "isBotol": false},
-        {"id": 5, "kategori": "Baterai Bekas", "jenis_kategori": "B3", "jumlah": "12 Kg", "isBotol": false},
-        {"id": 6, "kategori": "Lampu Neon", "jenis_kategori": "B3", "jumlah": "8 Pcs", "isBotol": false},
+        {"id": 5, "kategori": "Plastik Kemasan", "jenis_kategori": "Non Organik", "jumlah": "62 Kg", "isBotol": false},
+        {"id": 6, "kategori": "Kaleng Bekas", "jenis_kategori": "Non Organik", "jumlah": "25 Kg", "isBotol": false},
+        {"id": 7, "kategori": "Baterai Bekas", "jenis_kategori": "B3", "jumlah": "12 Kg", "isBotol": false},
+        {"id": 8, "kategori": "Lampu Neon", "jenis_kategori": "B3", "jumlah": "8 Pcs", "isBotol": false},
+        {"id": 9, "kategori": "Kompos Organik", "jenis_kategori": "Hasil Olahan", "jumlah": "150 Kg", "isBotol": false},
       ];
       _isLoading = false;
     });
   }
 
+  // --- Helper Kategori Checker ---
+  bool _isNonOrganik(dynamic item) {
+    final kat = _getItemCategory(item).toLowerCase();
+    final name = _getItemName(item).toLowerCase();
+    return kat.contains('non') || kat.contains('anorganik') || name.contains('botol') || name.contains('kardus') || name.contains('plastik') || name.contains('kaleng') || name.contains('kaca');
+  }
+
+  bool _isOrganik(dynamic item) {
+    final kat = _getItemCategory(item).toLowerCase();
+    return kat.contains('organik') && !kat.contains('non') && !kat.contains('anorganik');
+  }
+
+  bool _isB3(dynamic item) {
+    final kat = _getItemCategory(item).toLowerCase();
+    return kat.contains('b3');
+  }
+
+  bool _isHasilOlahan(dynamic item) {
+    final kat = _getItemCategory(item).toLowerCase();
+    return kat.contains('olahan') || kat.contains('hasil');
+  }
+
+  String _getItemName(dynamic item) {
+    if (item is Map) {
+      return (item['kategori'] ?? item['name'] ?? item['sub_category_name'] ?? item['jenis_sampah'] ?? item['title'] ?? 'Tanpa Nama').toString();
+    }
+    return 'Tanpa Nama';
+  }
+
+  String _getItemCategory(dynamic item) {
+    if (item is Map) {
+      if (item['category'] is Map) {
+        return (item['category']['name'] ?? '').toString();
+      }
+      return (item['jenis_kategori'] ?? item['category_name'] ?? item['cat_name'] ?? item['category'] ?? item['kategori_sampah'] ?? 'Umum').toString();
+    }
+    return 'Umum';
+  }
+
+  dynamic _getItemQuantity(dynamic item) {
+    if (item is Map) {
+      return item['jumlah'] ?? item['current_stock'] ?? item['total_weight'] ?? item['stock'] ?? item['quantity'] ?? item['weight'];
+    }
+    return '0';
+  }
+
   // --- Fungsi Filter & Search Logic ---
   List<dynamic> _getFilteredList() {
     return _laporanList.where((item) {
-      final namaSampah = (item['kategori'] ?? '').toString().toLowerCase();
-      final katSampah = (item['jenis_kategori'] ?? item['cat_name'] ?? '').toString();
+      final namaSampah = _getItemName(item).toLowerCase();
+      final katSampah = _getItemCategory(item);
 
-      final cocokKategori = _selectedKategori == 'Semua' || katSampah.toLowerCase() == _selectedKategori.toLowerCase();
-      final cocokSearch = namaSampah.contains(_searchQuery);
+      bool cocokKategori = false;
+      if (_selectedKategori == 'Semua') {
+        cocokKategori = true;
+      } else if (_selectedKategori == 'Non Organik') {
+        cocokKategori = _isNonOrganik(item);
+      } else if (_selectedKategori == 'Organik') {
+        cocokKategori = _isOrganik(item);
+      } else if (_selectedKategori == 'B3') {
+        cocokKategori = _isB3(item);
+      } else if (_selectedKategori == 'Hasil Olahan') {
+        cocokKategori = _isHasilOlahan(item);
+      } else {
+        cocokKategori = katSampah.toLowerCase().contains(_selectedKategori.toLowerCase());
+      }
+
+      final cocokSearch = namaSampah.contains(_searchQuery) || katSampah.toLowerCase().contains(_searchQuery);
 
       return cocokKategori && cocokSearch;
     }).toList();
@@ -196,15 +259,24 @@ class _LaporanDataHarianPageState extends State<LaporanDataHarianPage> {
 
           // AREA LIST DATA (BISA GROUPING MAUPUN SINGLE FILTER)
           Expanded(
-            child: _isLoading
-                ? const Center(child: CircularProgressIndicator(color: primaryColor))
-                : filteredData.isEmpty
-                    ? const Center(child: Text("Jenis atau kategori sampah tidak ditemukan"))
-                    : _selectedKategori == 'Semua' && _searchQuery.isEmpty
-                        ? _buildGroupedListView(filteredData, primaryColor)
-                        : _buildNormalListView(filteredData, primaryColor),
+            child: RefreshIndicator(
+              color: primaryColor,
+              onRefresh: _fetchLaporan,
+              child: _isLoading
+                  ? const Center(child: CircularProgressIndicator(color: primaryColor))
+                  : filteredData.isEmpty
+                      ? ListView(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          children: const [
+                            SizedBox(height: 100),
+                            Center(child: Text("Jenis atau kategori sampah tidak ditemukan")),
+                          ],
+                        )
+                      : _selectedKategori == 'Semua' && _searchQuery.isEmpty
+                          ? _buildGroupedListView(filteredData, primaryColor)
+                          : _buildNormalListView(filteredData, primaryColor),
+            ),
           ),
-
 
           Padding(
             padding: const EdgeInsets.all(20),
@@ -230,12 +302,16 @@ class _LaporanDataHarianPageState extends State<LaporanDataHarianPage> {
 
   // LAYOUT 1: Jika filter "Semua Kategori", data dikelompokkan per judul kategori
   Widget _buildGroupedListView(List<dynamic> data, Color primaryColor) {
-    // Memilah data lokal secara manual berdasarkan kategorinya
-    final organikList = data.where((e) => (e['jenis_kategori'] ?? '').toString().toLowerCase() == 'organik').toList();
-    final nonOrganikList = data.where((e) => (e['jenis_kategori'] ?? '').toString().toLowerCase() == 'non organik').toList();
-    final b3List = data.where((e) => (e['jenis_kategori'] ?? '').toString().toLowerCase() == 'b3').toList();
+    final organikList = data.where((e) => _isOrganik(e)).toList();
+    final nonOrganikList = data.where((e) => _isNonOrganik(e)).toList();
+    final b3List = data.where((e) => _isB3(e)).toList();
+    final olahanList = data.where((e) => _isHasilOlahan(e)).toList();
+
+    // Data yang tidak masuk kategori utama mana pun
+    final lainnyaList = data.where((e) => !_isOrganik(e) && !_isNonOrganik(e) && !_isB3(e) && !_isHasilOlahan(e)).toList();
 
     return ListView(
+      physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.all(20),
       children: [
         if (organikList.isNotEmpty) ...[
@@ -244,7 +320,7 @@ class _LaporanDataHarianPageState extends State<LaporanDataHarianPage> {
           const SizedBox(height: 10),
         ],
         if (nonOrganikList.isNotEmpty) ...[
-          _buildCategoryHeader("Sampah Non Organik", Colors.blue),
+          _buildCategoryHeader("Sampah Non-Organik", const Color(0xFFF2994A)),
           ...nonOrganikList.map((item) => _buildItemInkWell(item, primaryColor)),
           const SizedBox(height: 10),
         ],
@@ -253,10 +329,14 @@ class _LaporanDataHarianPageState extends State<LaporanDataHarianPage> {
           ...b3List.map((item) => _buildItemInkWell(item, primaryColor)),
           const SizedBox(height: 10),
         ],
-        // Hasil Olahan will be uncategorized if it's not matched above, let's catch it
-        if (data.where((e) => (e['jenis_kategori'] ?? '').toString().toLowerCase() == 'hasil olahan').toList().isNotEmpty) ...[
-          _buildCategoryHeader("Hasil Olahan", Colors.orange),
-          ...data.where((e) => (e['jenis_kategori'] ?? '').toString().toLowerCase() == 'hasil olahan').toList().map((item) => _buildItemInkWell(item, primaryColor)),
+        if (olahanList.isNotEmpty) ...[
+          _buildCategoryHeader("Hasil Olahan", Colors.teal),
+          ...olahanList.map((item) => _buildItemInkWell(item, primaryColor)),
+          const SizedBox(height: 10),
+        ],
+        if (lainnyaList.isNotEmpty) ...[
+          _buildCategoryHeader("Kategori Lainnya", Colors.blueGrey),
+          ...lainnyaList.map((item) => _buildItemInkWell(item, primaryColor)),
           const SizedBox(height: 10),
         ],
       ],
@@ -266,6 +346,7 @@ class _LaporanDataHarianPageState extends State<LaporanDataHarianPage> {
   // LAYOUT 2: Jika disaring spesifik atau sedang mengetik kolom pencarian
   Widget _buildNormalListView(List<dynamic> data, Color primaryColor) {
     return ListView.builder(
+      physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.all(20),
       itemCount: data.length,
       itemBuilder: (context, index) {
@@ -292,41 +373,82 @@ class _LaporanDataHarianPageState extends State<LaporanDataHarianPage> {
     );
   }
 
-  String _formatJumlah(String? rawJumlah) {
+  String _formatJumlah(dynamic rawJumlah) {
     if (rawJumlah == null) return '0 Kg';
-    final numericRegex = RegExp(r'[-+]?\d*\.?\d+');
-    final match = numericRegex.firstMatch(rawJumlah);
+    String str = rawJumlah.toString();
+    if (str.isEmpty) return '0 Kg';
+
+    final numericRegex = RegExp(r'^[-+]?\d*\.?\d+$');
+    if (numericRegex.hasMatch(str.trim())) {
+      final val = double.tryParse(str.trim()) ?? 0.0;
+      final displayVal = val % 1 == 0 ? val.toInt().toString() : val.toString();
+      return '$displayVal Kg';
+    }
+
+    final match = RegExp(r'[-+]?\d*\.?\d+').firstMatch(str);
     if (match != null) {
       final numberStr = match.group(0)!;
       final numberVal = double.tryParse(numberStr) ?? 0.0;
       if (numberVal < 0) {
-        final unitPart = rawJumlah.replaceAll(numberStr, '').trim();
-        return '0 $unitPart'.trim();
+        final unitPart = str.replaceAll(numberStr, '').trim();
+        return '0 ${unitPart.isEmpty ? 'Kg' : unitPart}'.trim();
       }
     }
-    return rawJumlah;
+    return str;
   }
 
   // Struktur navigasi klik item log kartu
-  Widget _buildItemInkWell(Map<String, dynamic> item, Color arrowColor) {
+  Widget _buildItemInkWell(dynamic item, Color arrowColor) {
+    final mapItem = item is Map<String, dynamic> ? item : Map<String, dynamic>.from(item as Map);
+    final itemName = _getItemName(mapItem);
+    final qtyStr = _formatJumlah(_getItemQuantity(mapItem));
+
     return InkWell(
       onTap: () {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text("Stok ${item['kategori'] ?? ''}: ${_formatJumlah(item['jumlah'])}"),
+            content: Text("Stok $itemName: $qtyStr"),
             duration: const Duration(seconds: 2),
             behavior: SnackBarBehavior.floating,
           )
         );
       },
-      child: _buildLaporanCard(item, arrowColor),
+      child: _buildLaporanCard(mapItem, arrowColor),
     );
   }
 
   Widget _buildLaporanCard(Map<String, dynamic> item, Color arrowColor) {
     bool isBotol = item['isBotol'] == true || item['isBotol'] == 1;
-    String kategoriLabel = item['jenis_kategori'] ?? 'Umum';
-    
+    String name = _getItemName(item);
+    String kategoriLabel = _getItemCategory(item);
+    dynamic rawJumlah = _getItemQuantity(item);
+
+    IconData cardIcon = Icons.layers_outlined;
+    Color iconBgColor = const Color(0xFFE5E9EC);
+    Color iconColor = const Color(0xFF14A38B);
+
+    if (_isNonOrganik(item)) {
+      if (kategoriLabel == 'Umum') kategoriLabel = 'Non Organik';
+      iconBgColor = const Color(0xFFFFF3E0);
+      iconColor = const Color(0xFFF2994A);
+      cardIcon = isBotol ? Icons.opacity_rounded : Icons.inventory_2_outlined;
+    } else if (_isOrganik(item)) {
+      if (kategoriLabel == 'Umum') kategoriLabel = 'Organik';
+      iconBgColor = const Color(0xFFE8F5E9);
+      iconColor = const Color(0xFF2E7D32);
+      cardIcon = Icons.grass_rounded;
+    } else if (_isB3(item)) {
+      if (kategoriLabel == 'Umum') kategoriLabel = 'B3';
+      iconBgColor = const Color(0xFFFFEBEE);
+      iconColor = const Color(0xFFC62828);
+      cardIcon = Icons.warning_amber_rounded;
+    } else if (_isHasilOlahan(item)) {
+      if (kategoriLabel == 'Umum') kategoriLabel = 'Hasil Olahan';
+      iconBgColor = const Color(0xFFE0F2F1);
+      iconColor = const Color(0xFF00796B);
+      cardIcon = Icons.recycling_rounded;
+    }
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
@@ -340,11 +462,9 @@ class _LaporanDataHarianPageState extends State<LaporanDataHarianPage> {
         children: [
           Container(
             width: 50, height: 50,
-            decoration: const BoxDecoration(color: Color(0xFFE5E9EC), shape: BoxShape.circle),
+            decoration: BoxDecoration(color: iconBgColor, shape: BoxShape.circle),
             child: Center(
-              child: isBotol
-                  ? const Icon(Icons.opacity_rounded, color: Colors.blue, size: 24)
-                  : const Icon(Icons.layers_outlined, color: Colors.teal, size: 24),
+              child: Icon(cardIcon, color: iconColor, size: 24),
             ),
           ),
           const SizedBox(width: 16),
@@ -353,16 +473,16 @@ class _LaporanDataHarianPageState extends State<LaporanDataHarianPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  item['kategori'] ?? 'N/A', 
+                  name, 
                   style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF264653))
                 ),
-                const SizedBox(height: 2),
+                const SizedBox(height: 4),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(color: const Color(0xFFF0F4F8), borderRadius: BorderRadius.circular(4)),
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  decoration: BoxDecoration(color: iconBgColor, borderRadius: BorderRadius.circular(4)),
                   child: Text(
                     kategoriLabel, 
-                    style: const TextStyle(fontSize: 10, color: Colors.black54, fontWeight: FontWeight.w500)
+                    style: TextStyle(fontSize: 10, color: iconColor, fontWeight: FontWeight.w600)
                   ),
                 ),
               ],
@@ -373,7 +493,7 @@ class _LaporanDataHarianPageState extends State<LaporanDataHarianPage> {
             children: [
               const Text("Stok Tersedia", style: TextStyle(fontSize: 10, color: Colors.grey)),
               Text(
-                _formatJumlah(item['jumlah']), 
+                _formatJumlah(rawJumlah), 
                 style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFF264653))
               ),
             ],
