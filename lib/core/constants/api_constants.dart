@@ -3,7 +3,7 @@ class ApiConstants {
 
   // Alamat host utama. Untuk server lokal jalankan:
   // flutter run --dart-define=API_HOST=http://192.168.1.10:8000
-  static const String host = String.fromEnvironment('API_HOST', defaultValue: 'http://192.168.1.7:8000');
+  static const String host = String.fromEnvironment('API_HOST', defaultValue: 'https://pbl.anjay.fun');
 
   static const String baseUrl = '$host/api';
   static const String storageUrl = '$host/storage';
