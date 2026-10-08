@@ -1,0 +1,1 @@
+{"success":true,"message":"Daftar jenis olahan berhasil dimuat","data":[{"id":2,"name":"Pelet Plastik","description":"Hasil cacahan plastik","photo":null,"photo_url":null,"unit":"kg","default_measured_qty":0,"stock":226},{"id":1,"name":"Pupuk Kompos","description":"Hasil pengolahan sampah organik","photo":null,"photo_url":null,"unit":"kg","default_measured_qty":0,"stock":-44}]}

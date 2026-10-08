@@ -184,7 +184,7 @@ class _RulerPickerModalState extends State<RulerPickerModal> {
                     color: Colors.red,
                     borderRadius: BorderRadius.circular(2),
                     boxShadow: [
-                      BoxShadow(color: Colors.red.withOpacity(0.5), blurRadius: 4, spreadRadius: 1)
+                      BoxShadow(color: Colors.red.withValues(alpha: 0.5), blurRadius: 4, spreadRadius: 1)
                     ]
                   ),
                 ),
